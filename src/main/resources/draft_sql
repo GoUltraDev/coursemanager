@@ -1,0 +1,38 @@
+SELECT
+    (
+        SELECT
+            CASE
+                WHEN m.buddhism = 'ภิกษุ' THEN 'พระ'
+                WHEN m.buddhism = 'สามเณร' THEN 'สามเณร'
+                WHEN m.buddhism = 'ฆราวาส' THEN 'คุณ'
+                WHEN m.buddhism = 'แม่ชี' THEN 'แม่ชี'
+            END
+    ) AS 'คำนำ',
+    m.name AS 'ชื่อ',
+    m.surname AS 'นามสกุล',
+    m.nickname AS 'ชื่อเล่น',
+    m.age AS 'อายุ',
+    (
+        SELECT
+            CASE
+                WHEN m.status = 'ผู้สมัครใหม่' THEN 'N'
+                ELSE m.status = 'O'
+            END
+    ) AS 'ศิษย์',
+    m.phone AS 'เบอร์ติดต่อ',
+    null AS 'เรื่อนพัก',
+    null AS 'ที่นั่ง',d
+    null AS 'ลงชื่อ'
+FROM
+    applies a
+    INNER JOIN members m ON m.id = a.member_id
+    INNER JOIN courses c ON c.id = a.course_id
+WHERE
+    a.state IN ('ผ่านการอบรม')
+ORDER BY
+    CASE
+        WHEN m.buddhism = 'ภิกษุ' THEN 0
+        WHEN m.buddhism = 'สามเณร' THEN 1
+        WHEN m.buddhism = 'แม่ชี' THEN 2
+        WHEN m.buddhism = 'ฆราวาส' THEN 3
+    END;
