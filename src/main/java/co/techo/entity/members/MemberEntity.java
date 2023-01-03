@@ -14,15 +14,23 @@ public class MemberEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    @Enumerated(EnumType.STRING)
     private Gender gender;
     private String name;
     private String surname;
     private String nickname;
     private Integer age;
     private Date birthdate;
+    @Enumerated(EnumType.STRING)
     private Buddhism buddhism;
+    @Enumerated(EnumType.STRING)
     private Status status;
     private String phone;
+    private String phone_desc;
+    private String phone_2;
+    private String phone_2_desc;
+    private String phone_slug;
+    @Enumerated(EnumType.STRING)
     private Blacklist blacklist;
     private String email;
     private String province;

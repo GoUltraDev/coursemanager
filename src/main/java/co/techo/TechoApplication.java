@@ -10,4 +10,11 @@ public class TechoApplication {
 		SpringApplication.run(TechoApplication.class, args);
 	}
 
+//	@Bean
+//	public PropertiesFactoryBean propertiesfilemapping() {
+//		PropertiesFactoryBean factoryBean = new PropertiesFactoryBean();
+//		factoryBean.setFileEncoding("UTF-8");
+//		factoryBean.setLocation(new ClassPathResource("application.properties"));
+//		return factoryBean;
+//	}
 }

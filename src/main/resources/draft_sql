@@ -36,3 +36,5 @@ ORDER BY
         WHEN m.buddhism = 'แม่ชี' THEN 2
         WHEN m.buddhism = 'ฆราวาส' THEN 3
     END;
+
+
