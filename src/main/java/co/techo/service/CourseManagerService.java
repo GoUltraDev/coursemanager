@@ -85,54 +85,66 @@ public class CourseManagerService implements ListingReportAbstract {
     @Override
     public String[][] getVanSigningReport(RequestPayload request) {
         String[][] vanSigningDataList = new String[0][];
-        if (request.getRequest_data() != null && request.getRequest_data().getType() == 3) {
-            int courseId = request.getRequest_data().getCourse_id();
-            Map<String, String> courseInfo = getCourseInfo(courseId);
-            String gender = request.getRequest_data().getGender().trim().equals("M") ? "ชาย" : "หญิง";
-            vanSigningDataList = applyRepository.findVanSigningData(courseId, 100, gender);
-            if (vanSigningDataList.length != 0) {
-                log.info("VanSigning is running.");
-                generator.genVanSigningListExcel(getDataMappingList(vanSigningDataList), courseInfo, gender);
-            } else {
-                log.info("There are not data available.");
-            }
+
+        if (request == null || request.getRequest_data() == null || request.getRequest_data().getType() != 3) {
+            return vanSigningDataList;
         }
+
+        int courseId = request.getRequest_data().getCourse_id();
+        Map<String, String> courseInfo = getCourseInfo(courseId);
+        String gender = request.getRequest_data().getGender().trim().equals("M") ? "ชาย" : "หญิง";
+        vanSigningDataList = applyRepository.findVanSigningData(courseId, 100, gender);
+
+        if (vanSigningDataList.length != 0) {
+            log.info("VanSigning is running.");
+            generator.genVanSigningListExcel(getDataMappingList(vanSigningDataList), courseInfo, gender);
+        } else {
+            log.info("There are not data available.");
+        }
+
         return vanSigningDataList;
     }
+
 
     @Override
     public String[][] getCourseSigningReport(RequestPayload request) {
         String[][] courseSigningReportDataList = new String[0][];
-        if (request.getRequest_data() != null && request.getRequest_data().getType() == 2) {
-            int courseId = request.getRequest_data().getCourse_id();
-            Map<String, String> courseInfo = getCourseInfo(courseId);
-            String gender = request.getRequest_data().getGender().trim().equals("M") ? "ชาย" : "หญิง";
-            String courseType = courseInfo.get("courseType");
-            switch (courseType) {
-                case "1":
-                    log.info("CourseSigningReport 1 is running : {}", COURSE_ANAPANASATI_1DAYS_ENG);
-                    courseSigningReportDataList = applyRepository.findCourseSigningCertificateAnapanasati1Day(courseId, 100, gender);
-                    break;
-                case "2":
-                    log.info("CourseSigningReport 2 is running : {}", COURSE_ANAPANASATI_3DAYS_ENG);
-                    courseSigningReportDataList = applyRepository.findCourseSigningCertificateAnapanasati3Days(courseId, 100, gender);
-                    break;
-                case "3":
-                    log.info("CourseSigningReport 3 is running : {}", COURSE_ALUMNI_3DAYS_ENG);
-                    courseSigningReportDataList = applyRepository.findCourseSigningCertificateAlumni3Days(courseId, 100, gender);
-                    break;
-                case "4":
-                    log.info("CourseSigningReport 4 is running: {}", COURSE_TECHO_VIPASSANA_ENG);
-                    courseSigningReportDataList = applyRepository.findCourseSigningCertificateTecho(courseId, 100, gender);
-                    break;
-                default:
-            }
-            if (courseSigningReportDataList.length != 0) {
-                generator.genCourseSigningListExcel(getDataMappingList(courseSigningReportDataList), courseInfo, gender);
-            } else {
-                log.info("There are not data available.");
-            }
+
+        if (request == null || request.getRequest_data() == null || request.getRequest_data().getType() != 2) {
+            return courseSigningReportDataList;
         }
+
+        int courseId = request.getRequest_data().getCourse_id();
+        Map<String, String> courseInfo = getCourseInfo(courseId);
+        String gender = request.getRequest_data().getGender().trim().equals("M") ? "ชาย" : "หญิง";
+        String courseType = courseInfo.get("courseType");
+
+        switch (courseType) {
+            case "1":
+                log.info("CourseSigningReport 1 is running : {}", COURSE_ANAPANASATI_1DAYS_ENG);
+                courseSigningReportDataList = applyRepository.findCourseSigningCertificateAnapanasati1Day(courseId, 100, gender);
+                break;
+            case "2":
+                log.info("CourseSigningReport 2 is running : {}", COURSE_ANAPANASATI_3DAYS_ENG);
+                courseSigningReportDataList = applyRepository.findCourseSigningCertificateAnapanasati3Days(courseId, 100, gender);
+                break;
+            case "3":
+                log.info("CourseSigningReport 3 is running : {}", COURSE_ALUMNI_3DAYS_ENG);
+                courseSigningReportDataList = applyRepository.findCourseSigningCertificateAlumni3Days(courseId, 100, gender);
+                break;
+            case "4":
+                log.info("CourseSigningReport 4 is running: {}", COURSE_TECHO_VIPASSANA_ENG);
+                courseSigningReportDataList = applyRepository.findCourseSigningCertificateTecho(courseId, 100, gender);
+                break;
+            default:
+        }
+
+        if (courseSigningReportDataList.length != 0) {
+            generator.genCourseSigningListExcel(getDataMappingList(courseSigningReportDataList), courseInfo, gender);
+        } else {
+            log.info("There are not data available.");
+        }
+
         return courseSigningReportDataList;
     }
 
@@ -167,7 +179,7 @@ public class CourseManagerService implements ListingReportAbstract {
     }
 
 
-    private Map<String, String> getCourseInfo(int course_id) {
+    Map<String, String> getCourseInfo(int course_id) {
         Map<String, String> info = new HashMap<>();
         String[][] courseEntity = courseRepository.findCourseType2(course_id);
         for (String[] entity : courseEntity) {
@@ -200,4 +212,45 @@ public class CourseManagerService implements ListingReportAbstract {
         }
         return info;
     }
+
+    private Map<String, String> getCourseInfo2(int course_id) {
+        Map<String, String> info = new HashMap<>();
+        String[][] courseEntity = courseRepository.findCourseType2(course_id);
+
+        if (courseEntity == null || courseEntity.length == 0) {
+            return info;
+        }
+
+        String[] entity = courseEntity[0];
+        String lastValue = entity[entity.length - 1];
+
+        if (CATEGORY_ID_ANAPANASATI_1DAYS.equals(lastValue)) {
+            info.put("courseType", "1");
+            info.put("courseName", entity[3]);
+            info.put("dateStart", entity[4]);
+            info.put("dateEnd", entity[5]);
+            info.put("categoryId", lastValue);
+        } else if (CATEGORY_ID_ANAPANASATI_3DAYS.equals(lastValue)) {
+            info.put("courseType", "2");
+            info.put("courseName", entity[3]);
+            info.put("dateStart", entity[4]);
+            info.put("dateEnd", entity[5]);
+            info.put("categoryId", lastValue);
+        } else if (CATEGORY_ID_ALUMNI_3DAYS.equals(lastValue)) {
+            info.put("courseType", "3");
+            info.put("courseName", entity[3]);
+            info.put("dateStart", entity[4]);
+            info.put("dateEnd", entity[5]);
+            info.put("categoryId", lastValue);
+        } else if (CATEGORY_ID_TECHO_VIPASSANA.equals(lastValue)) {
+            info.put("courseType", "4");
+            info.put("courseName", entity[3]);
+            info.put("dateStart", entity[4]);
+            info.put("dateEnd", entity[5]);
+            info.put("categoryId", lastValue);
+        }
+
+        return info;
+    }
+
 }

@@ -3,6 +3,7 @@ package co.techo.service;
 import co.techo.common.Config;
 import co.techo.dto.CourseSigningListDto;
 import co.techo.service.interfaces.ExcelReportAbstract;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
@@ -19,21 +20,20 @@ import static co.techo.service.util.UtilityService.getThaiMonthFromNumber;
 
 @Service
 @Log4j2
+@RequiredArgsConstructor
 public class ReportGeneratorService implements ExcelReportAbstract {
 
-
+    public static final String SHEET = "Sheet";
+    public static final String ZERO_TIME_REPLACED = "00:00:00.0";
+    public static final String PUNCTUATION_MARK = "-";
     private final Config config;
-
-    public ReportGeneratorService(Config config) {
-        this.config = config;
-    }
 
     @Override
     public void genCourseConfirmCallListExcel(List<CourseSigningListDto> resultList, Map<String, String> courseInfo, String gender) {
         try {
 
             HSSFWorkbook workbook = new HSSFWorkbook();
-            Sheet sheet = workbook.createSheet("Sheet");
+            Sheet sheet = workbook.createSheet(SHEET);
 
             Map<String, CellStyle> styles = createStyles(workbook);
 
@@ -44,19 +44,19 @@ public class ReportGeneratorService implements ExcelReportAbstract {
 
             String courseName = getCourseName(courseInfo.get("categoryId"));
             String exportFullPath = getExportFullPath(COURSE_CONFIRM_FILENAME_PREFIX, courseName, gender);
-            FileOutputStream fileOut = new FileOutputStream(exportFullPath);
-            workbook.write(fileOut);
-            fileOut.close();
-            workbook.close();
-            log.info("CourseConfirmExcel has been generated!");
 
+            try (FileOutputStream fileOut = new FileOutputStream(exportFullPath)) {
+                workbook.write(fileOut);
+                workbook.close();
+                log.info("CourseConfirmExcel has been generated!");
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("Error generating CourseConfirmExcel", e);
         }
     }
 
     private String getCourseName(String categoryId) {
-        String res = null;
+        String res;
         switch (categoryId) {
             case "8":
                 res = COURSE_ANAPANASATI_1DAYS_ENG;
@@ -70,6 +70,8 @@ public class ReportGeneratorService implements ExcelReportAbstract {
             case "1":
                 res = COURSE_TECHO_VIPASSANA_ENG;
                 break;
+            default:
+                throw new IllegalStateException("Unexpected value: " + categoryId);
         }
         return res;
     }
@@ -79,12 +81,12 @@ public class ReportGeneratorService implements ExcelReportAbstract {
         try {
 
             HSSFWorkbook workbook = new HSSFWorkbook();
-            Sheet sheet = workbook.createSheet("Sheet");
+            Sheet sheet = workbook.createSheet(SHEET);
 
             Map<String, CellStyle> styles = createStyles(workbook);
 
             setSheetSpec(sheet);
-            setTitleRow(courseInfo, gender, sheet, styles);
+            setTitleRow(sheet, courseInfo, gender, styles);
             setHeaderRow(sheet, styles);
             setDataRow(sheet, resultList, styles);
 
@@ -112,7 +114,7 @@ public class ReportGeneratorService implements ExcelReportAbstract {
             Map<String, CellStyle> styles = createStyles(workbook);
 
             setSheetSpec(sheet);
-            setTitleRow(courseInfo, gender, sheet, styles);
+            setTitleRow(sheet, courseInfo, gender, styles);
             setHeaderRow(sheet, styles);
             setDataRow(sheet, resultList, styles);
 
@@ -130,9 +132,9 @@ public class ReportGeneratorService implements ExcelReportAbstract {
     }
 
     private String getDateStringTitle(Map<String, String> courseInfo) {
-        String[] dateStart = courseInfo.get("dateStart").replace("00:00:00.0", "").split("-", 3);
-        String[] dateEnd = courseInfo.get("dateEnd").replace("00:00:00.0", "").split("-", 3);
-        String[] thaiYear = courseInfo.get("dateEnd").replace("00:00:00.0", "").split("-", 3);
+        String[] dateStart = courseInfo.get("dateStart").replace(ZERO_TIME_REPLACED, "").split(PUNCTUATION_MARK, 3);
+        String[] dateEnd = courseInfo.get("dateEnd").replace(ZERO_TIME_REPLACED, "").split(PUNCTUATION_MARK, 3);
+        String[] thaiYear = courseInfo.get("dateEnd").replace(ZERO_TIME_REPLACED, "").split(PUNCTUATION_MARK, 3);
         int yearInt = Integer.parseInt(thaiYear[0]);
         String thaiMonth = getThaiMonthFromNumber(dateEnd[1]);
         return "วันที่ " + dateStart[2].trim() + " - " + dateEnd[2].trim() + " " + thaiMonth + " " + (yearInt + 543);
@@ -175,7 +177,7 @@ public class ReportGeneratorService implements ExcelReportAbstract {
         sheet.addMergedRegion(CellRangeAddress.valueOf("$A$4:$J$4"));
     }
 
-    private void setTitleRow(Map<String, String> courseInfo, String gender, Sheet sheet, Map<String, CellStyle> styles) {
+    private void setTitleRow(Sheet sheet, Map<String, String> courseInfo, String gender, Map<String, CellStyle> styles) {
         Row titleRow1 = sheet.createRow(0);
         titleRow1.setHeightInPoints(93);
         Cell titleCellLine1 = titleRow1.createCell(0);
